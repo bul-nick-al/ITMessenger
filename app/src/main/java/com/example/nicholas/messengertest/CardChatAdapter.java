@@ -16,6 +16,8 @@ import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
 /**
  * Created by nicholas on 18/10/2017.
  */
@@ -56,6 +58,7 @@ public class CardChatAdapter extends RecyclerView.Adapter<CardChatAdapter.ViewHo
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mContext, ChatActivity.class);
+                intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
                 mContext.startActivity(intent);
 ////                ((CircleImageView) cardView.findViewById(R.id.profilePic)).setImageResource(R.drawable.q8);
             }
