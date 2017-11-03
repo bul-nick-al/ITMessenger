@@ -57,7 +57,8 @@
                 android:text="d" />
         </LinearLayout>
 
-
+        <include
+            layout="@layout/toolbar"/>
     </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>

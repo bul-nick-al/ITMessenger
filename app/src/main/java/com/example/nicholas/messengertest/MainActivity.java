@@ -26,11 +26,15 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RecyclerView.Adapter adapter;
     private RecyclerView.LayoutManager layoutManager;
+    private SharedPreferences settings;
+    private  SharedPreferences.Editor editor;
+    private Toolbar mActionBarToolbar;
+    private TextView mToolbarTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        SharedPreferences settings = getSharedPreferences("MySettings", 0);
-        SharedPreferences.Editor editor = settings.edit();
+        settings = getSharedPreferences("MySettings", 0);
+        editor = settings.edit();
         editor.commit();
         String token = settings.getString("token","null");
         if (token.equals("null")){
@@ -42,6 +46,65 @@ public class MainActivity extends AppCompatActivity {
         setTitle(token);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        customizeToolbar();
+
+
+        recyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        ArrayList<ChatPreview> x= new ArrayList<>();
+        x.add(new ChatPreview());
+        adapter = new CardChatAdapter(x, getApplicationContext());
+        recyclerView.setAdapter(adapter);
+
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_add_alarm) {
+            editor.clear();
+            editor.commit();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+            this.finish();
+            return true;
+        } else
+            return super.onOptionsItemSelected(item);
+    }
+
+    public void customizeToolbar() {
+        mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbarTitle = (TextView) mActionBarToolbar.findViewById(R.id.toolbar_title);
+        setSupportActionBar(mActionBarToolbar);
+        mToolbarTitle.setText(settings.getString("token","no:(((("));
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+    }
+}
+
+
+//    FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//    final TextView textView = (TextView) findViewById(R.id.text);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//@Override
+//public void onClick(View view) {
+//        textView.setText("Hey fag");
+//        Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//        .setAction("Action", null).show();
+//        Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+//        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+//        startActivity(intent);
+//        }
+//        });
+
 
 //        SharedPreferences.Editor editor = settings.edit();
 //        editor.putString("token","mamka twoya tut byla");
@@ -70,60 +133,3 @@ public class MainActivity extends AppCompatActivity {
 //        System.out.println("Hello");
 //        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        setSupportActionBar(toolbar);
-        recyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
-        layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-        ArrayList<ChatPreview> x= new ArrayList<>();
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        x.add(new ChatPreview());
-        adapter = new CardChatAdapter(x, getApplicationContext());
-        recyclerView.setAdapter(adapter);
-
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        final TextView textView = (TextView) findViewById(R.id.text);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                textView.setText("Hey fag");
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-                intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            }
-        });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-}
