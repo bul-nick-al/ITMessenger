@@ -1,26 +1,19 @@
 package com.example.nicholas.messengertest;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import cz.msebera.android.httpclient.entity.mime.Header;
-import cz.msebera.android.httpclient.entity.mime.content.StringBody;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -31,6 +24,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button loginButton;
     private EditText mUsernameEditTextView;
     private EditText mPasswordEditTextView;
+    private TextView signUpTextiew;
     private SharedPreferences settings;
     private  SharedPreferences.Editor editor;
     String username;
@@ -45,7 +39,8 @@ public class LoginActivity extends AppCompatActivity {
         editor = settings.edit();
         loginButton = (Button) findViewById(R.id.btn_login);
         mUsernameEditTextView = (EditText) findViewById(R.id.input_username);
-        mPasswordEditTextView = (EditText) findViewById(R.id.input_password);
+        mPasswordEditTextView = (EditText) findViewById(R.id.sign_up_password);
+        signUpTextiew = (TextView) findViewById(R.id.link_signup);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -84,9 +79,11 @@ public class LoginActivity extends AppCompatActivity {
                         toast.show();
                     }
                 });
-
-
-
+            }
+        });
+        signUpTextiew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
             }
         });
