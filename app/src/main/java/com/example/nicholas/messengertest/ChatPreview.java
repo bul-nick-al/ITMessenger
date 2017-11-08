@@ -7,7 +7,7 @@ import android.media.Image;
  */
 
 public class ChatPreview {
-    Contact contact;
+    String username;
     Image pic;
     Message lastMessage;
 }

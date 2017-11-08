@@ -1,18 +1,12 @@
 package com.example.nicholas.messengertest;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.TextViewCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -27,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView.Adapter adapter;
     private RecyclerView.LayoutManager layoutManager;
     private SharedPreferences settings;
-    private  SharedPreferences.Editor editor;
+    private SharedPreferences.Editor editor;
     private Toolbar mActionBarToolbar;
     private TextView mToolbarTitle;
 
@@ -70,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_add_alarm) {
+        if (item.getItemId() == R.id.action_log_out) {
             editor.clear();
             editor.commit();
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);

@@ -33,8 +33,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordEditTextView;
     private SharedPreferences settings;
     private  SharedPreferences.Editor editor;
-    String username;
-    String password;
+    private String username;
+    private String password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -5,7 +5,7 @@
     <item
         android:title="Log out"
         android:icon="@drawable/logout_icon"
-        android:id="@+id/action_add_alarm"
+        android:id="@+id/action_log_out"
         android:orderInCategory="1"
         app:showAsAction="ifRoom"/>
 </menu>
