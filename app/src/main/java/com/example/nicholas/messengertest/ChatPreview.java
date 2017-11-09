@@ -8,6 +8,13 @@ import android.media.Image;
 
 public class ChatPreview {
     String username;
+    int id;
     Image pic;
-    Message lastMessage;
+    String lastMessage;
+
+    public ChatPreview(String username, int id, String lastMessage) {
+        this.username = username;
+        this.id = id;
+        this.lastMessage = lastMessage;
+    }
 }

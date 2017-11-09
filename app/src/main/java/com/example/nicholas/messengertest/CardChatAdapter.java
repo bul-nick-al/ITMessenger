@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
@@ -26,8 +27,7 @@ public class CardChatAdapter extends RecyclerView.Adapter<CardChatAdapter.ViewHo
 
     private ArrayList<ChatPreview> chats;
     Context mContext;
-    EditText text;
-    ImageButton button;
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
         private CardView cardView;
@@ -50,15 +50,21 @@ public class CardChatAdapter extends RecyclerView.Adapter<CardChatAdapter.ViewHo
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(ViewHolder holder, final int position) {
         final CardView cardView = holder.cardView;
         CircleImageView pic = (CircleImageView) cardView.findViewById(R.id.profilePic);
         pic.setImageResource(R.drawable.q6);
+        TextView username = (TextView) cardView.findViewById(R.id.username);
+        TextView body = (TextView) cardView.findViewById(R.id.body);
+        username.setText(chats.get(position).username);
+        body.setText(chats.get(position).lastMessage);
+        TextView date;
         cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mContext, ChatActivity.class);
                 intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("id", chats.get(position).id);
                 mContext.startActivity(intent);
 ////                ((CircleImageView) cardView.findViewById(R.id.profilePic)).setImageResource(R.drawable.q8);
             }
