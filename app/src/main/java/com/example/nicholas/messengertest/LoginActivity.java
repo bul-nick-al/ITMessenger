@@ -31,6 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     private SharedPreferences.Editor editor;
     private String username;
     private String password;
+    private int id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         initializeFields();
         setOnClickListeners();
+
     }
 
     /**
@@ -91,6 +93,8 @@ public class LoginActivity extends AppCompatActivity {
                     editor.putString("username", username);
                     editor.putString("token", token);
                     editor.commit();
+                    getMyID();
+
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
@@ -125,6 +129,40 @@ public class LoginActivity extends AppCompatActivity {
                 showToast("Success");
                 signUp = false;
                 loginButton.setText("Log in");
+            }
+
+            @Override
+            public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                try {
+                    showToast((String) ((JSONArray) errorResponse.get("username")).get(0));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONArray errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+        });
+    }
+
+    private void getMyID(){
+        RestClient.get("/api/user/index?username="+settings.getString("username",null), null, new JsonHttpResponseHandler()  {
+            @Override
+            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, JSONObject response) {
+                showToast("Success");
+                try {
+                    id = response.getJSONArray("userlist").getJSONObject(0).getInt("id");
+                    editor.putInt("myID", id);
+                    editor.commit();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override

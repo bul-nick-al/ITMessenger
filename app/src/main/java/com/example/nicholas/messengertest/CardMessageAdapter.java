@@ -12,12 +12,15 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 /**
- * Created by nicholas on 20/10/2017.
+ * Created by nicholas on 18/10/2017.
+ *
+ * This class represent the adapter user by recycler view for messages in a chat
  */
 
 public class CardMessageAdapter extends RecyclerView.Adapter<CardMessageAdapter.ViewHolder>  {
     private ArrayList<Message> messages;
-        Context mContext;
+    private Context mContext;
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
         private CardView cardView;
@@ -47,6 +50,7 @@ public class CardMessageAdapter extends RecyclerView.Adapter<CardMessageAdapter.
         ((TextView)cardView.findViewById(R.id.message_text)).setText(message.body);
         LinearLayout layout = (LinearLayout) cardView.findViewById(R.id.bubble_layout);
         LinearLayout parent_layout = (LinearLayout) cardView.findViewById(R.id.bubble_layout_parent);
+        //change position of the cloud message depending upon whose message this is
         if (message.isMine) {
             layout.setBackgroundResource(R.drawable.bubble2);
             parent_layout.setGravity(Gravity.RIGHT);

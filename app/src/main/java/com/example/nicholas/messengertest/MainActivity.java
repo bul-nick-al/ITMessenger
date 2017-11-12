@@ -1,11 +1,12 @@
 package com.example.nicholas.messengertest;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -16,7 +17,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.loopj.android.http.JsonHttpResponseHandler;
 
@@ -32,52 +35,80 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private RecyclerView.Adapter adapter;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView.LayoutManager layoutManager;
     private SharedPreferences settings;
     private SharedPreferences.Editor editor;
     private Toolbar mActionBarToolbar;
     private TextView mToolbarTitle;
     private ArrayList<ChatPreview> chatPreviews;
-
+    private int otherUserID;
+    private String otherUsername;
+    private FloatingActionButton addNewChat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //first set up setting and check if logged in
+        initializeSettings();
+        checkLoggedIn();
+        //then regular routine
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initializeFields();
+        customizeToolbar();
+        setOnClickListeners();
+        setTitle(settings.getString("token",null));
+        loadMessages();
+    }
+
+    public void initializeSettings(){
         settings = getSharedPreferences("MySettings", 0);
         editor = settings.edit();
-        editor.commit();
-        String token = settings.getString("token","null");
-        if (token.equals("null")){
+    }
+
+    /**
+     * checks whether the user is logged in, if not, launches Login intent
+     */
+    public void checkLoggedIn(){
+        String token = settings.getString("token",null);
+        if (token == null){
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             this.finish();
         }
-        setTitle(token);
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        customizeToolbar();
+    }
 
-
+    /**
+     * fields initialization
+     */
+    public void initializeFields(){
         recyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+        swipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipeRefreshLayout);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
-        chatPreviews= new ArrayList<>();
+        chatPreviews = new ArrayList<>();
         adapter = new CardChatAdapter(chatPreviews, getApplicationContext());
         recyclerView.setAdapter(adapter);
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-    final TextView textView = (TextView) findViewById(R.id.text);
-        fab.setOnClickListener(new View.OnClickListener() {
+        addNewChat = (FloatingActionButton) findViewById(R.id.fab);
+    }
+
+    /**
+     * sets on click listeners
+     */
+    public void setOnClickListeners(){
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onClick(View view) {
-                showInputDialog();
+            public void onRefresh() {
+                loadMessages();
             }
         });
-
-        loadMessages();
-
-
-
-
+        addNewChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showNewChatDialog();
+            }
+        });
     }
 
     @Override
@@ -89,76 +120,83 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_log_out) {
-            editor.clear();
-            editor.commit();
-            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-            startActivity(intent);
-            this.finish();
-            return true;
-        } else
-            return super.onOptionsItemSelected(item);
+        switch (item.getItemId()){
+            case R.id.action_log_out:
+                editor.clear();
+                editor.commit();
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent);
+                this.finish();
+                return true;
+            case R.id.action_settings:
+                showSettingsDialog();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     public void customizeToolbar() {
         mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         mToolbarTitle = (TextView) mActionBarToolbar.findViewById(R.id.toolbar_title);
         setSupportActionBar(mActionBarToolbar);
-        mToolbarTitle.setText(settings.getString("token","no:(((("));
+        mToolbarTitle.setText(settings.getString("username","no:(((("));
         getSupportActionBar().setDisplayShowTitleEnabled(false);
     }
 
     public void loadMessages(){
+        chatPreviews.clear();
         RestClient.get("/api/message/index?token="+settings.getString("token", null),null,new JsonHttpResponseHandler(){
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, JSONObject response) {
                 try {
                     JSONArray jsonMessages = ((JSONArray) response.get("messages"));
-                    int x = 6;
                     for (int i = 0; i < jsonMessages.length(); i++) {
                         JSONObject jsonMessage = (JSONObject) jsonMessages.get(i);
-                        chatPreviews.add(new ChatPreview(getUsername(jsonMessage),Integer.parseInt(getUsername(jsonMessage)),jsonMessage.getString("body")));
+                        getOtherID(jsonMessage);
+                        chatPreviews.add(new ChatPreview(otherUserID,jsonMessage.getString("body"),jsonMessage.getLong("timestamp"),MainActivity.this));
                     }
-                    recyclerView.getAdapter().notifyDataSetChanged();
+                    refreshRecyclerView();
 
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
         });
+        swipeRefreshLayout.setRefreshing(false);
     }
 
-    public String getUsername(JSONObject jsonMessage){
+    /**
+     * retrieves the other user's id from jsonMessage
+     * @param jsonMessage
+     */
+    public void getOtherID(JSONObject jsonMessage){
+        int id = settings.getInt("myID",0);
         try {
-            if (jsonMessage.getInt("receiver_id") == 3)
-                return jsonMessage.getString("sender_id");
-            else return jsonMessage.getString("receiver_id");
+            if (jsonMessage.getInt("receiver_id") == id)
+                otherUserID = jsonMessage.getInt("sender_id");
+            else
+                otherUserID = jsonMessage.getInt("receiver_id");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return null;
     }
     public boolean isMine(int id){
-        return id == 3;
+        return id == settings.getInt("myID", 0);
     }
 
-    protected void showInputDialog() {
-
-        // get prompts.xml view
+    protected void showSettingsDialog() {
         LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
-        View promptView = layoutInflater.inflate(R.layout.dialog_new_chat, null);
+        View promptView = layoutInflater.inflate(R.layout.dialog_settings, null);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
         alertDialogBuilder.setView(promptView);
-
-        final EditText editText = (EditText) promptView.findViewById(R.id.username_for_new_chat);
+        final RadioGroup radioGroup = (RadioGroup)promptView.findViewById(R.id.radio_group_compression);
         // setup a dialog window
         alertDialogBuilder.setCancelable(false)
                 .setPositiveButton("Start chat", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-                        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-                        intent.putExtra("id", Integer.parseInt(editText.getText().toString()));
-                        startActivity(intent);
+
+                        int c = 0;
                     }
                 })
                 .setNegativeButton("Cancel",
@@ -172,48 +210,82 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog alert = alertDialogBuilder.create();
         alert.show();
     }
+
+    /**
+     * launches dialog for starting new chat
+     */
+    protected void showNewChatDialog() {
+        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
+        View promptView = layoutInflater.inflate(R.layout.dialog_new_chat, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+        alertDialogBuilder.setView(promptView);
+
+        final EditText editText = (EditText) promptView.findViewById(R.id.username_for_new_chat);
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("Start chat", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        getID(editText.getText().toString());
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create an alert dialog
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+    }
+
+    /**
+     * launches new chat activity
+     */
+    private void startChat(){
+        Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("id", otherUserID);
+        intent.putExtra("username", otherUsername);
+        startActivity(intent);
+    }
+
+    /**
+     * retrieves user id from server given username
+     * @param username
+     */
+    private void getID(String username){
+        RestClient.get("/api/user/index?username="+username, null, new JsonHttpResponseHandler()  {
+            @Override
+            public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, JSONObject response) {
+                try {
+                    otherUserID = response.getJSONArray("userlist").getJSONObject(0).getInt("id");
+                    otherUsername = response.getJSONArray("userlist").getJSONObject(0).getString("username");
+                    startChat();
+                } catch (JSONException e) {
+                    showToast("invalid username");
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    /**
+     * shows a toast with the message
+     * @param message
+     */
+    private void showToast(String message){
+        Toast toast =  Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
+        toast.show();
+    }
+
+    public void refreshRecyclerView(){
+        MainActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                recyclerView.getAdapter().notifyDataSetChanged();
+            }
+        });
+    }
 }
-
-
-//    FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//    final TextView textView = (TextView) findViewById(R.id.text);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//@Override
-//public void onClick(View view) {
-//        textView.setText("Hey fag");
-//        Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//        .setAction("Action", null).show();
-//        Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-//        intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-//        startActivity(intent);
-//        }
-//        });
-
-
-//        SharedPreferences.Editor editor = settings.edit();
-//        editor.putString("token","mamka twoya tut byla");
-//        editor.commit();
-//        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-//                builder1.setMessage());
-//                builder1.setCancelable(true);
-//
-//                builder1.setPositiveButton(
-//                        "Yes",
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int id) {
-//                                dialog.cancel();
-//                            }
-//                        });
-//
-//                builder1.setNegativeButton(
-//                        "No",
-//                        new DialogInterface.OnClickListener() {
-//                            public void onClick(DialogInterface dialog, int id) {
-//                                dialog.cancel();
-//                            }
-//                        });
-//                AlertDialog alert11 = builder1.create();
-//                alert11.show();
-//        System.out.println("Hello");
-//        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);

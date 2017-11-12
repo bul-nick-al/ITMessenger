@@ -3,6 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.nicholas.messengertest.MainActivity">
     <item
+    android:title="Log out"
+    android:icon="@drawable/settings"
+    android:id="@+id/action_settings"
+    android:orderInCategory="1"
+    app:showAsAction="ifRoom"/>
+    <item
         android:title="Log out"
         android:icon="@drawable/logout_icon"
         android:id="@+id/action_log_out"

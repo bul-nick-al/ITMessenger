@@ -10,16 +10,16 @@ import java.util.StringTokenizer;
 
 public class Message {
     public enum Type{
-        text, audio, image, textual;
+        text, file;
     }
     String sender;
     Type type;
-    String date;
+    long date;
     String body;
     File file;
     boolean isMine;
 
-    public Message(String sender, Type type, String date, String body, File file, boolean isMine) {
+    public Message(String sender, Type type, long date, String body, File file, boolean isMine) {
         this.sender = sender;
         this.type = type;
         this.date = date;
