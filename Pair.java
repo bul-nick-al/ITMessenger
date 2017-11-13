@@ -1,3 +1,6 @@
+
+//package demmprogrammi1.ShannonCD;
+
 import java.lang.Comparable;
 
 class Pair implements Comparable<Pair> {
