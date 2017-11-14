@@ -3,15 +3,11 @@
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.math.BigInteger;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,9 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.nio.ByteBuffer;
 
 /*
@@ -70,19 +63,15 @@ class ShannonFano {
     /*
      * reconstruct binary string from byte[] into compressed code
      */
-    private static StringBuilder reconstructInput() {
-        //StringBuilder buffer = new StringBuilder();
-        //StringBuilder code = new StringBuilder();
-        List<Byte> bytes = new ArrayList<>();
+    private static StringBuffer reconstructInput() {
+        StringBuffer buffer = new StringBuffer();
         for (byte b : input)
-            bytes.add(Byte.valueOf(b));
-        return new StringBuilder(bytes.stream().map(el -> codes.get(el)).collect(Collectors.joining()));
+            buffer.append(codes.get(b));
 
-        //buffer = buffer.append(codes.get(b));
-
+        return buffer;
     }
 
-    private static byte[] getCompressedBytes(StringBuilder buff) {
+    private static byte[] getCompressedBytes(StringBuffer buff) {
         int padd = 0;
         while (buff.length() % 8 != 0) {
             buff.append('0');
@@ -99,21 +88,16 @@ class ShannonFano {
             //size = ByteBuffer.allocate(4).putInt(map.length).array();
         } catch (Exception e) {
         }
-        System.out.println("FROM COMPRESSED");
-        System.out.println("Hashmap size: " + map.length);
         byte output[] = new byte[1 + len + 4 + map.length];
         output[4] = (byte) (map.length & 0xFF);
         output[3] = (byte) ((map.length >> 8) & 0xFF);
         output[2] = (byte) ((map.length >> 16) & 0xFF);
         output[1] = (byte) ((map.length >> 24) & 0xFF);
         output[0] = (byte) (padd & 0xFF);
-        System.out.println(output[0]);
-
         System.arraycopy(map, 0, output, 5, map.length);
 
         for (int i = 0; i < len; ++i)
             output[i + 5 + map.length] = convertByte(buff.substring(i * 8, (i + 1) * 8));
-        System.out.println("codes length: " + len);
         return output;
     }
 
@@ -140,9 +124,7 @@ class ShannonFano {
         codes = new HashMap<Byte, String>();
         buildCodes(diffCount);
         // build binary string that represents codes for input bytes
-        StringBuilder binaryString = reconstructInput();
-        //System.out.print("binary str length: " + binaryString.length());
-
+        StringBuffer binaryString = reconstructInput();
         //outputCodes();
         return getCompressedBytes(binaryString);
     }
@@ -160,8 +142,6 @@ class ShannonFano {
         int padd = (int) in[0];
         // fetching size of Serialized Hashmap
         int MapSize = ByteBuffer.wrap(Arrays.copyOfRange(in, 1, 5)).getInt();
-        System.out.println("FROM DECOMPRESSED");
-        System.out.println("Size of hashmap: " + MapSize);
         HashMap<Byte, String> map = new HashMap<>();
         try {
             ByteArrayInputStream bis = new ByteArrayInputStream(in, 5, MapSize);
@@ -177,7 +157,6 @@ class ShannonFano {
         HashMap<String, Byte> reverse = GetReversedMap(map);
         StringBuilder buffer = new StringBuilder();
         ArrayList<Byte> decompressed = new ArrayList<>();
-        System.out.println("Compressed bytes: " + (in.length - MapSize - 4));
         for (byte b : codes)
             buffer.append(convertString(b));
 
@@ -193,7 +172,6 @@ class ShannonFano {
             decompressed.add(reverse.get(buffer.substring(pos, pos + off)));
             pos += off;
         }
-        System.out.println(decompressed.size());
         byte[] result = new byte[decompressed.size()];
         for (int i = 0; i < result.length; ++i)
             result[i] = decompressed.get(i).byteValue();
@@ -257,8 +235,6 @@ class ShannonFano {
     }
 
     public static void outputCodes() {
-        //System.out.print(codes.isEmpty());
-        System.out.println("Codes: ");
         for (Entry<Byte, String> entry : codes.entrySet())
             System.out.println(entry.toString());
     }
