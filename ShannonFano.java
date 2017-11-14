@@ -24,6 +24,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.nio.ByteBuffer;
 
+/*
+ *  USAGE 
+ * IN ORDER TO COMPRESS BYTES => MEthod GetCompressed(byte[]) : byte[]
+ * 
+ * IN ORDER TO DECOMPRESS BYTES => Method getDecompressed(byte[]) : byte[]
+ */
+
 class ShannonFano {
     private static HashMap<Byte, Integer> distribution; // initial distribution (Byte --> how many times it occurs)
     private static int totalCount; // total amount of accepted bytes
@@ -36,7 +43,7 @@ class ShannonFano {
      * Return codes for accepted distribution by Shannon-Fano compression algorithm
      */
 
-    public static void buildCodes(int len) {
+    private static void buildCodes(int len) {
         buildCode(0, len - 1, "");
     }
 
@@ -76,8 +83,11 @@ class ShannonFano {
     }
 
     private static byte[] getCompressedBytes(StringBuilder buff) {
-        while (buff.length() % 8 != 0)
+        int padd = 0;
+        while (buff.length() % 8 != 0) {
             buff.append('0');
+            ++padd;
+        }
         int len = buff.length() / 8;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         byte map[] = new byte[1];
@@ -91,16 +101,18 @@ class ShannonFano {
         }
         System.out.println("FROM COMPRESSED");
         System.out.println("Hashmap size: " + map.length);
-        byte output[] = new byte[len + 4 + map.length];
-        output[3] = (byte) (map.length & 0xFF);
-        output[2] = (byte) ((map.length >> 8) & 0xFF);
-        output[1] = (byte) ((map.length >> 16) & 0xFF);
-        output[0] = (byte) ((map.length >> 24) & 0xFF);
+        byte output[] = new byte[1 + len + 4 + map.length];
+        output[4] = (byte) (map.length & 0xFF);
+        output[3] = (byte) ((map.length >> 8) & 0xFF);
+        output[2] = (byte) ((map.length >> 16) & 0xFF);
+        output[1] = (byte) ((map.length >> 24) & 0xFF);
+        output[0] = (byte) (padd & 0xFF);
+        System.out.println(output[0]);
 
-        System.arraycopy(map, 0, output, 4, map.length);
+        System.arraycopy(map, 0, output, 5, map.length);
 
         for (int i = 0; i < len; ++i)
-            output[i + 4 + map.length] = convertByte(buff.substring(i * 8, (i + 1) * 8));
+            output[i + 5 + map.length] = convertByte(buff.substring(i * 8, (i + 1) * 8));
         System.out.println("codes length: " + len);
         return output;
     }
@@ -129,7 +141,7 @@ class ShannonFano {
         buildCodes(diffCount);
         // build binary string that represents codes for input bytes
         StringBuilder binaryString = reconstructInput();
-        System.out.print("binary str length: " + binaryString.length());
+        //System.out.print("binary str length: " + binaryString.length());
 
         //outputCodes();
         return getCompressedBytes(binaryString);
@@ -144,13 +156,15 @@ class ShannonFano {
     }
 
     public static byte[] getDecompressed(byte[] in) {
+        //fetching padding size
+        int padd = (int) in[0];
         // fetching size of Serialized Hashmap
-        int MapSize = ByteBuffer.wrap(Arrays.copyOfRange(in, 0, 4)).getInt();
+        int MapSize = ByteBuffer.wrap(Arrays.copyOfRange(in, 1, 5)).getInt();
         System.out.println("FROM DECOMPRESSED");
         System.out.println("Size of hashmap: " + MapSize);
         HashMap<Byte, String> map = new HashMap<>();
         try {
-            ByteArrayInputStream bis = new ByteArrayInputStream(in, 4, MapSize);
+            ByteArrayInputStream bis = new ByteArrayInputStream(in, 5, MapSize);
             ObjectInputStream ois = new ObjectInputStream(bis);
             map = (HashMap<Byte, String>) ois.readObject();
             ois.close();
@@ -158,7 +172,7 @@ class ShannonFano {
         } catch (Exception e) {
         }
         // compressed bytes
-        byte[] codes = Arrays.copyOfRange(in, MapSize + 4, in.length);
+        byte[] codes = Arrays.copyOfRange(in, MapSize + 5, in.length);
         //reversed Hashmap to decompress 
         HashMap<String, Byte> reverse = GetReversedMap(map);
         StringBuilder buffer = new StringBuilder();
@@ -172,17 +186,10 @@ class ShannonFano {
          */
         int pos = 0;
         boolean end = false;
-        while (pos < buffer.length() && !end) {
+        while (pos < buffer.length() - padd) {
             int off = 0;
             while (reverse.get(buffer.substring(pos, pos + off)) == null)
-                if (pos + off < buffer.length())
-                    ++off;
-                else {
-                    end = true;
-                    break;
-                }
-            if (end)
-                break;
+                ++off;
             decompressed.add(reverse.get(buffer.substring(pos, pos + off)));
             pos += off;
         }
