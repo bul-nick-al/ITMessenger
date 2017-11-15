@@ -1,11 +1,13 @@
 package com.example.nicholas.messengertest;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
+import android.os.StrictMode;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,9 +15,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import com.example.nicholas.messengertest.CompressionAndConing.CodingAndCompression;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import org.json.JSONArray;
@@ -23,9 +28,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+
+import cz.msebera.android.httpclient.Header;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -45,7 +51,8 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton sendMessageButton;
     private ImageButton attachFileButton;
     private Thread thread;
-    private byte[] file;
+    private long size;
+
 
 
     @Override
@@ -57,6 +64,8 @@ public class ChatActivity extends AppCompatActivity {
         initializeFields();
         launchBackgroundMessageReload();
         setOnClickListeners();
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
     }
 
     /**
@@ -117,31 +126,15 @@ public class ChatActivity extends AppCompatActivity {
      * set on click listeners
      */
     public void setOnClickListeners(){
-        mActionBarToolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    File file = new File(Environment.getExternalStoragePublicDirectory(
-                            Environment.DIRECTORY_PICTURES), "xxx.jpeg");
-                    FileOutputStream fOut = new FileOutputStream(file);
-                    fOut.write(ChatActivity.this.file);
-                    fOut.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
         sendMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                messages.add(new Message(id+"", Message.Type.text, (long)(new Date()).getTime()/1000, editText.getText().toString(),null,true));
-                RequestParams params = new RequestParams();
-                params.put("message", editText.getText().toString().trim());
+                messages.add(new Message(id+"", Message.Type.text, (long)(new Date()).getTime()/1000, editText.getText().toString(),null,true,"<M>", ChatActivity.this));
+                messages.get(messages.size()-1).message = editText.getText().toString().trim();
                 recyclerView.getAdapter().notifyDataSetChanged();
                 recyclerView.scrollToPosition(messages.size()-1);
+                sendMessage(true);
                 editText.setText("");
-                RestClient.post("/api/message/put?token="+settings.getString("token",null)+"&user_id="+id+"",params,new JsonHttpResponseHandler(){
-                });
             }
         });
         attachFileButton.setOnClickListener(new View.OnClickListener() {
@@ -172,9 +165,11 @@ public class ChatActivity extends AppCompatActivity {
                     try {
                         JSONArray jsonMessages = (JSONArray) response.get("messages");
                         for (int i = 0; i < jsonMessages.length(); i++) {
-                            messages.add(new Message(null, Message.Type.text,jsonMessages.getJSONObject(i).getLong("timestamp"), (String) jsonMessages.getJSONObject(i).get("body"),null, isMine((int) jsonMessages.getJSONObject(i).get("sender_id"))));
+                            messages.add(new Message(null, Message.Type.text,jsonMessages.getJSONObject(i).getLong("timestamp"),
+                                    jsonMessages.getJSONObject(i).getJSONObject("message").getString("url"),null, isMine((int) jsonMessages.getJSONObject(i).get("sender_id")),
+                                    jsonMessages.getJSONObject(i).getString("format"), ChatActivity.this));
                         }
-                        refreshRecyclerView();
+                        refreshRecyclerView(false);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -182,7 +177,7 @@ public class ChatActivity extends AppCompatActivity {
             });
         }
         else {
-            RestClient.get("/api/message/get?token="+settings.getString("token", null)+"&user_id="+id+"&time="+messages.get(messages.size()-1).date,null,new JsonHttpResponseHandler(){
+            RestClient.get("/api/message/get?token="+settings.getString("token", null)+"&user_id="+id+"&time="+messages.get(messages.size()-1).timeDate,null,new JsonHttpResponseHandler(){
                 @Override
                 public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, JSONObject response) {
                     boolean somethingArrived = false;
@@ -191,11 +186,13 @@ public class ChatActivity extends AppCompatActivity {
                         for (int i = 0; i < jsonMessages.length(); i++) {
                             somethingArrived = true;
                             if (!isMine((int) jsonMessages.getJSONObject(i).get("sender_id")))
-                                messages.add(new Message(null, Message.Type.text,jsonMessages.getJSONObject(i).getLong("timestamp"), (String) jsonMessages.getJSONObject(i).get("body"),null, isMine((int) jsonMessages.getJSONObject(i).get("sender_id"))));
+                                messages.add(new Message(null, Message.Type.text,jsonMessages.getJSONObject(i).getLong("timestamp"),
+                                        jsonMessages.getJSONObject(i).getJSONObject("message").getString("url"),null, isMine((int) jsonMessages.getJSONObject(i).get("sender_id")),
+                                        jsonMessages.getJSONObject(i).getString("format"), ChatActivity.this));
                         }
-                        refreshRecyclerView();
+
                         if (somethingArrived)
-                            recyclerView.scrollToPosition(messages.size()-1);
+                            refreshRecyclerView(true);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -207,18 +204,22 @@ public class ChatActivity extends AppCompatActivity {
     /**
      * invoke recycler view refreshment
      */
-    public void refreshRecyclerView(){
+    public void refreshRecyclerView(final boolean toBottom){
         ChatActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 recyclerView.getAdapter().notifyDataSetChanged();
+                if (toBottom)
+                    recyclerView.smoothScrollToPosition(messages.size()-1);
             }
         });
+
     }
+
     @Override
-    protected void onStop() {
+    protected void onDestroy() {
         keepLoading = false;
-        super.onStop();
+        super.onDestroy();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -234,19 +235,139 @@ public class ChatActivity extends AppCompatActivity {
             // Instead, a URI to that document will be contained in the return intent
             // provided to this method as a parameter.
             // Pull that URI using resultData.getData().
-            Uri uri = null;
-            file = null;
+            uri = null;
             if (resultData != null) {
                 uri = resultData.getData();
-                try {
-                     file = org.apache.commons.io.IOUtils.toByteArray(getContentResolver().openInputStream(uri));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                messages.add(new Message(id+"", Message.Type.file, (long)(new Date()).getTime()/1000, uri.getPath(),null,true,"<M>", ChatActivity.this));
+                refreshRecyclerView(true);
+                messages.get(messages.size()-1).message = uri.getLastPathSegment().substring(uri.getLastPathSegment().lastIndexOf('/')+1);
+                sendMessage(false);
             }
         }
     }
 
+    private void sendMessage(final boolean isText){
+        RequestParams params = new RequestParams();
+        params.put("token", settings.getString("token",null));
+        params.put("user_id",id);
+        File tempFile = null;
+        FileOutputStream outputStream = null;
+        try {
+            if (isText){
+                tempFile = new File(ChatActivity.this.getFilesDir(),"test");
+
+                outputStream = new FileOutputStream(tempFile);
+                //TODO: here you should call not getBytes but some encoding and compression methods
+                outputStream.write(encode(editText.getText().toString().trim().getBytes()));
+                outputStream.close();
+                //TODO: also add compression and coding names to formats
+                params.put("format","<M><"+settings.getString("compression",null)+"><"+settings.getString("coding",null)+">");
+                params.put("file","message",tempFile);
+            }
+            else {
+                byte[] temp = org.apache.commons.io.IOUtils.toByteArray(getContentResolver().openInputStream(uri));
+                tempFile = new File(ChatActivity.this.getFilesDir(),uri.getPath().substring(uri.getPath().lastIndexOf('/')+1));
+                outputStream = new FileOutputStream(tempFile);
+                //TODO: here you should call not temp but some encoding and compression methods
+                outputStream.write(encode(temp));
+                outputStream.close();
+                //TODO: also add compression and coding names to formats
+                params.put("format","<F><"+settings.getString("compression",null)+"><"+settings.getString("coding",null)+"><type:"+this.getContentResolver().getType(uri)+">");
+                params.put("file",uri.getPath().substring(uri.getPath().lastIndexOf('/')+1),tempFile);
+
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        RestClient.post("/api/message/put",params,new JsonHttpResponseHandler(){
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                super.onSuccess(statusCode, headers, response);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                super.onSuccess(statusCode, headers, response);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, String responseString) {
+                super.onSuccess(statusCode, headers, responseString);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONArray errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onProgress(long bytesWritten, long totalSize) {
+                if (!isText){
+                    messages.get(messages.size()-1).button.setVisibility(View.VISIBLE);
+                    messages.get(messages.size()-1).button.setProgressAndMax((int)(((float)bytesWritten/totalSize)*10000), 10000);
+                }
+                super.onProgress(bytesWritten, totalSize);
+            }
+
+            @Override
+            public void onFinish() {
+                super.onFinish();
+            }
+        });
+
+        refreshRecyclerView(true);
+    }
+
+    Uri uri;
+
+    public static String getMimeType(Context context, Uri uri) {
+        String extension;
+
+        //Check uri format to avoid null
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            //If scheme is a content
+            final MimeTypeMap mime = MimeTypeMap.getSingleton();
+            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
+        } else {
+            //If scheme is a File
+            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
+            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
+
+        }
+
+        return extension;
+    }
+
+    private byte[] encode(byte[] input){
+        String compressionType = settings.getString("compression", null);
+        String codingType = settings.getString("coding", null);
+        CodingAndCompression.Compression compression = null;
+        CodingAndCompression.Coding coding = null;
+        if (compressionType.equals("shannon"))
+            compression = CodingAndCompression.Compression.shannon;
+        if (compressionType.equals("lzm"))
+            compression = CodingAndCompression.Compression.lzm;
+        if (compressionType.equals("huffman"))
+            compression = CodingAndCompression.Compression.huffman;
+        if (codingType.equals("repetition"))
+            coding = CodingAndCompression.Coding.repetition;
+        if (codingType.equals("parity"))
+            coding = CodingAndCompression.Coding.parity;
+        if (codingType.equals("hamming"))
+            coding = CodingAndCompression.Coding.hamming;
+        return CodingAndCompression.compressAndEncode(input, compression, coding);
+    }
 
 
     private boolean isMine(int id){

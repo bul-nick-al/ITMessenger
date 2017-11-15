@@ -27,7 +27,14 @@
                 android:maxEms="12"
                 android:text="Hi! new message"
                 android:textColor="@android:color/primary_text_light" />
+
         </LinearLayout>
+
+        <com.f2prateek.progressbutton.ProgressButton
+            android:id="@+id/progressButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center" />
 
     </LinearLayout>
 

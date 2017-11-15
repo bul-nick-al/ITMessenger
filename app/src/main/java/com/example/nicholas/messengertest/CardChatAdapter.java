@@ -54,10 +54,10 @@ public class CardChatAdapter extends RecyclerView.Adapter<CardChatAdapter.ViewHo
     public void onBindViewHolder(ViewHolder holder, final int position) {
         CardView cardView = holder.cardView;
         username = (TextView) cardView.findViewById(R.id.username);
-        body = (TextView) cardView.findViewById(R.id.body);
-        date = (TextView) cardView.findViewById(R.id.date);
+        body = (TextView) cardView.findViewById(R.id.message);
+        date = (TextView) cardView.findViewById(R.id.timeDate);
         username.setText(chats.get(position).username);
-        body.setText(chats.get(position).lastMessage);
+        body.setText(chats.get(position).message);
         date.setText(formatDate(chats.get(position).timeDate*1000));
         //setting onClick listener, so thahe previewt the chat will open when a user clicks on t
         cardView.setOnClickListener(new View.OnClickListener() {
@@ -79,10 +79,10 @@ public class CardChatAdapter extends RecyclerView.Adapter<CardChatAdapter.ViewHo
     }
 
     /**
-     * makes formatted date and time form unix time
+     * makes formatted timeDate and time form unix time
      *
      * @param unixTime
-     * @return string with formatted date/time
+     * @return string with formatted timeDate/time
      */
     public String formatDate(long unixTime){
         Date date = new Date(unixTime);

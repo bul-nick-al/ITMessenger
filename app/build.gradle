@@ -32,5 +32,6 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:25.0.1'
     compile 'de.hdodenhof:circleimageview:2.2.0'
     compile 'com.loopj.android:android-async-http:1.4.9'
+    compile 'com.f2prateek.progressbutton:progressbutton:2.1.0@aar'
     testCompile 'junit:junit:4.12'
 }

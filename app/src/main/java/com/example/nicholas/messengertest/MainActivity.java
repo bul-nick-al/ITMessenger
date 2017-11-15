@@ -27,7 +27,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
+
+import cz.msebera.android.httpclient.Header;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -48,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        File x= new File("temp");
         //first set up setting and check if logged in
         initializeSettings();
         checkLoggedIn();
@@ -141,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
         mToolbarTitle = (TextView) mActionBarToolbar.findViewById(R.id.toolbar_title);
         setSupportActionBar(mActionBarToolbar);
         mToolbarTitle.setText(settings.getString("username","no:(((("));
+//        mToolbarTitle.setText("het");
         getSupportActionBar().setDisplayShowTitleEnabled(false);
     }
 
@@ -154,13 +159,29 @@ public class MainActivity extends AppCompatActivity {
                     for (int i = 0; i < jsonMessages.length(); i++) {
                         JSONObject jsonMessage = (JSONObject) jsonMessages.get(i);
                         getOtherID(jsonMessage);
-                        chatPreviews.add(new ChatPreview(otherUserID,jsonMessage.getString("body"),jsonMessage.getLong("timestamp"),MainActivity.this));
+                        JSONObject message = jsonMessage.getJSONObject("message");
+                        chatPreviews.add(new ChatPreview(otherUserID,message.getString("url"),jsonMessage.getLong("timestamp"),MainActivity.this, jsonMessage.getString("format")));
                     }
                     refreshRecyclerView();
 
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONArray errorResponse) {
+                super.onFailure(statusCode, headers, throwable, errorResponse);
             }
         });
         swipeRefreshLayout.setRefreshing(false);
@@ -190,13 +211,37 @@ public class MainActivity extends AppCompatActivity {
         View promptView = layoutInflater.inflate(R.layout.dialog_settings, null);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
         alertDialogBuilder.setView(promptView);
-        final RadioGroup radioGroup = (RadioGroup)promptView.findViewById(R.id.radio_group_compression);
+        final RadioGroup radioGroupCompression = (RadioGroup)promptView.findViewById(R.id.radio_group_compression);
+        final RadioGroup radioGroupCoding = (RadioGroup)promptView.findViewById(R.id.radio_group_coding);
         // setup a dialog window
         alertDialogBuilder.setCancelable(false)
-                .setPositiveButton("Start chat", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-
-                        int c = 0;
+                        //saving which coding algorithm to use
+                        switch (radioGroupCoding.getCheckedRadioButtonId()){
+                            case R.id.repetition:
+                                editor.putString("coding", "repetition");
+                                break;
+                            case R.id.hamming:
+                                editor.putString("coding", "hamming");
+                                break;
+                            case R.id.parity:
+                                editor.putString("coding", "parity");
+                                break;
+                        }
+                        //saving which compression algorithm to use
+                        switch (radioGroupCompression.getCheckedRadioButtonId()){
+                            case R.id.shannon:
+                                editor.putString("compression", "shannon");
+                                break;
+                            case R.id.lzm:
+                                editor.putString("compression", "lzm");
+                                break;
+                            case R.id.huffman:
+                                editor.putString("compression", "huffman");
+                                break;
+                        }
+                        editor.commit();
                     }
                 })
                 .setNegativeButton("Cancel",

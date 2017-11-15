@@ -1,15 +1,10 @@
-package com.example.nicholas.messengertest;
-
-import java.util.BitSet;
-import java.util.IllegalFormatConversionException;
+package com.example.nicholas.messengertest.CompressionAndConing.Coding;
 
 /**
  * Created by nicholas on 11/11/2017.
  */
 
 public class ParityBit {
-    private static final int BYTE_SIZE = 8;
-
     public static byte[] encode(byte[] input){
         StringBuilder sb = new StringBuilder(input.length * 9);
         for (byte anInput : input) {
@@ -21,6 +16,7 @@ public class ParityBit {
             }
             sb.append(count % 2 == 1 ? '1' : '0');
         }
+//        System.out.println(sb.toString());
         return convertToByteArray(sb.toString());
     }
 
@@ -31,30 +27,37 @@ public class ParityBit {
      * @return a byte array
      */
     private static byte[] convertToByteArray(String input) {
-        byte[] output = new byte[input.length() / 8];
+        byte[] output = new byte[(int)Math.ceil((float) input.length()/8)+2];
+        System.out.println(output.length);
         for (int i = 0; i < input.length(); i += 8) {
-            String subStr = input.substring(i, i + 8);
+            String subStr = input.substring(i, (i + 8 <= input.length()) ? i + 8 : i + input.length()%8);
             int anInt = Integer.parseInt(subStr, 2); //used for avoiding size mismatch
-            output[i / 8] = (byte) anInt;
+            output[i / 8] =  (i + 8 < input.length()) ? (byte)anInt : (byte)(anInt<<(8 - input.length()%8));
         }
         return output;
     }
 
     public static byte[] decode(byte[] input) throws Exception{
         String bitString = convertToBitString(input);
+//        System.out.println(bitString);
         StringBuilder sb = new StringBuilder();
         int count = 0;
         for (int i = 0; i < bitString.length(); i++) {
             if (i%9 == 8){
-                if (count%2 == Integer.parseInt(bitString.charAt(i)+""))
+                if (count%2 != Integer.parseInt(bitString.charAt(i)+""))
                     throw new Exception("parity failed");
+                count = 0;
+                if (i+9 >= bitString.length())
+                    break;
             }
             else {
                 sb.append(bitString.charAt(i));
                 count = bitString.charAt(i) == '1' ? count+1 : count;
             }
         }
-        return null;
+//        System.out.println(sb.toString().length());
+//        System.out.println(sb.toString());
+        return convertToByteArray(sb.toString());
     }
 
     /**

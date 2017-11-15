@@ -23,18 +23,22 @@
             android:id="@+id/radio_group_compression">
 
             <RadioButton
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/shannon"
                 android:text="Shannon-Fano" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/lzm"
                 android:text="LZM" />
 
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/huffman"
                 android:text="Huffman" />
         </RadioGroup>
 
@@ -58,15 +62,18 @@
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Shannon-Fano"/>
+                android:id="@+id/repetition"
+                android:text="Repetitions"/>
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="LZM"/>
+                android:id="@+id/hamming"
+                android:text="Hamming"/>
             <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Huffman"/>
+                android:id="@+id/parity"
+                android:text="Parity"/>
         </RadioGroup>
     </LinearLayout>
 </LinearLayout>
