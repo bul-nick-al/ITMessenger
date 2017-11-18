@@ -7,7 +7,7 @@ import java.util.Arrays;
  */
 public class Repetition {
     final static int numOfRepetitions = 3;
-    static boolean foundError;
+    static boolean foundError; //used for error detecting
 
     /**
      * Converts a byte array into a bit string
