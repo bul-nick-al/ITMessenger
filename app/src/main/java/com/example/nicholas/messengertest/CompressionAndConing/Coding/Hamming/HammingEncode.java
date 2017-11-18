@@ -9,17 +9,26 @@ import static java.lang.Math.*;
  */
 public class HammingEncode {
 
-    final static int R = 4, M = 8, leng = 12;
-    static int length;
-    static BitSet basic;
-    public static byte[] encoded;
+    final static int R = 4, M = 8, leng = 12;   //R - number of parity bits, M - number of bits, leng - length of the coded bits
+    static int length;  //length of encoded message
+    static BitSet basic;    //helping variabled for encoding
+    public static byte[] encoded;   //encoded message
 
+    /**
+     * constructor of encoding message
+     * calls the algorithm
+     * @param message
+     */
     public HammingEncode(byte[] message) {
         length = message.length;
         encoded = new byte[length * 2];
         algorithm(message);
     }
 
+    /**
+     * method to encode the message by byte
+     * @param message
+     */
     private static void algorithm(byte[] message) {
         for (int i = 0; i < message.length; i++) {
             basic = new BitSet(leng);
@@ -31,6 +40,18 @@ public class HammingEncode {
         }
     }
 
+    /**
+     * method to encode message
+     * counts the parity bits for the byte
+     * counts the number of 1's, if the number is odd, than parity bit is 1
+     * else parity bit is zero
+     *
+     * for parity bits:
+     *  #1 - check 1, skip 1
+     *  #2 - check 2, skip 2
+     *  #4 - check 4, skip 4
+     *  #8 - check 8, skip 8
+     */
     public static void encode() {
         for (int i = 1; i <= R; i++) {
             int parityBit = 0;
@@ -45,6 +66,10 @@ public class HammingEncode {
         }
     }
 
+    /**
+     * convert from bytes to binary
+     * @param input
+     */
     private static void fromByteToBinary(byte input) {
         int j = 1;
         char[] ch = String.format("%8s", Integer.toBinaryString(input & 0xFF)).replace(' ', '0').toCharArray();
@@ -60,10 +85,18 @@ public class HammingEncode {
         }
     }
 
+    /**
+     * @param parity
+     * @return whether the number of 1's is odd or not
+     */
     private static boolean isOdd(int parity) {
         return parity % 2 != 0;
     }
 
+    /**
+     * converts to byte from the binary
+     * @return
+     */
     public static byte[] toByteSequence() {
         byte[] res = new byte[2];
         for (int i = 0; i < leng; i++) {
@@ -74,15 +107,12 @@ public class HammingEncode {
         return res;
     }
 
+    /**
+     * @param input
+     * @return true if the bit is 1
+     */
     public static boolean isOne(char input) {
         return input == '1';
-    }
-
-    public String toString() {
-        String s = "";
-        for (int i = 0; i < length; i++)
-            s += (basic.get(i) ? 1 : 0);
-        return s;
     }
 }
 
