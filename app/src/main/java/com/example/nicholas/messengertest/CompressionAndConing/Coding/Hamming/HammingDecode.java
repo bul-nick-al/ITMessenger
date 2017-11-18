@@ -1,7 +1,6 @@
 package com.example.nicholas.messengertest.CompressionAndConing.Coding.Hamming;
 
 import java.util.BitSet;
-
 import static java.lang.Math.pow;
 
 /**
@@ -9,18 +8,20 @@ import static java.lang.Math.pow;
  */
 public class HammingDecode {
 
-    final int R = 4, M = 8, leng = 12;
-    public byte[] decoded;
-    BitSet encoded;
-    int length, errorBit;
+    final static int R = 4, M = 8, leng = 12;
+    public static byte[] decoded;
+    static BitSet encoded;
+    static int length, errorBit;
+    public static boolean mistake;
 
     public HammingDecode(byte[] message) {
         length = message.length;
+        mistake = false;
         decoded = new byte[length / 2];
         algorithm(message);
     }
 
-    private void algorithm(byte[] message) {
+    private static void algorithm(byte[] message) {
         for (int i = 0; i < length; i += 2) {
             byte[] temp = new byte[2];
             temp[0] = message[i];
@@ -32,7 +33,7 @@ public class HammingDecode {
         }
     }
 
-    private void findError() {
+    private static void findError() {
         for (int i = 1; i <= R; i++) {
             int parityBit = 0;
             int parity = (int) pow(2, i - 1);
@@ -43,12 +44,15 @@ public class HammingDecode {
                 }
             }
             parityBit -= (encoded.get(parity - 1) ? 1 : 0);
-            if (encoded.get(parity - 1) != isOdd(parityBit))
+            if (encoded.get(parity - 1) != isOdd(parityBit)) {
                 errorBit += parity;
+                mistake = true;
+            }
+
         }
     }
 
-    private byte decode() {
+    private static byte decode() {
         BitSet dec = new BitSet(M);
         int j = 0;
         for (int i = 0; i < leng; i++) {
@@ -63,7 +67,7 @@ public class HammingDecode {
         return fromBinaryToByte(dec);
     }
 
-    private void fromByteToBinary(byte[] message) {
+    private static void fromByteToBinary(byte[] message) {
         int j = 0;
         for(int i = 0; i < message.length; i++) {
             char[] ch = String.format("%8s", Integer.toBinaryString(message[i] & 0xFF)).replace(' ', '0').toCharArray();
@@ -79,7 +83,7 @@ public class HammingDecode {
         }
     }
 
-    private byte fromBinaryToByte(BitSet input) {
+    private static byte fromBinaryToByte(BitSet input) {
         byte res = 0;
         for (int i = 0; i < M; i++) {
             if (input.get(i)) {
@@ -89,12 +93,11 @@ public class HammingDecode {
         return res;
     }
 
-    private boolean isOdd(int parity) {
+    private static boolean isOdd(int parity) {
         return parity % 2 != 0;
     }
 
-
-    public boolean isOne(char input) {
+    public static boolean isOne(char input) {
         return input == '1';
     }
 
@@ -105,7 +108,7 @@ public class HammingDecode {
         return s;
     }
 
-    public void printBitSet(BitSet toPrint, int len) {
+    public static void printBitSet(BitSet toPrint, int len) {
         String s = "";
         for (int i = 0; i < len; i++)
             s += (toPrint.get(i) ? 1 : 0);

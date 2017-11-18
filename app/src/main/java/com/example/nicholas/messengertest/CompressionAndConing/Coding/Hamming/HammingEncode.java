@@ -9,18 +9,18 @@ import static java.lang.Math.*;
  */
 public class HammingEncode {
 
-    final int R = 4, M = 8, leng = 12;
-    int length;
-    BitSet basic;
-    public byte[] encoded;
+    final static int R = 4, M = 8, leng = 12;
+    static int length;
+    static BitSet basic;
+    public static byte[] encoded;
 
-     public HammingEncode(byte[] message) {
+    public HammingEncode(byte[] message) {
         length = message.length;
         encoded = new byte[length * 2];
         algorithm(message);
     }
 
-    private void algorithm(byte[] message) {
+    private static void algorithm(byte[] message) {
         for (int i = 0; i < message.length; i++) {
             basic = new BitSet(leng);
             fromByteToBinary(message[i]);
@@ -31,7 +31,7 @@ public class HammingEncode {
         }
     }
 
-    public void encode() {
+    public static void encode() {
         for (int i = 1; i <= R; i++) {
             int parityBit = 0;
             int parity = (int) pow(2, i - 1);
@@ -45,7 +45,7 @@ public class HammingEncode {
         }
     }
 
-    private void fromByteToBinary(byte input) {
+    private static void fromByteToBinary(byte input) {
         int j = 1;
         char[] ch = String.format("%8s", Integer.toBinaryString(input & 0xFF)).replace(' ', '0').toCharArray();
         int k = 0;
@@ -60,11 +60,11 @@ public class HammingEncode {
         }
     }
 
-    private boolean isOdd(int parity) {
+    private static boolean isOdd(int parity) {
         return parity % 2 != 0;
     }
 
-    public byte[] toByteSequence() {
+    public static byte[] toByteSequence() {
         byte[] res = new byte[2];
         for (int i = 0; i < leng; i++) {
             if (basic.get(i)) {
@@ -74,7 +74,7 @@ public class HammingEncode {
         return res;
     }
 
-    public boolean isOne(char input) {
+    public static boolean isOne(char input) {
         return input == '1';
     }
 
@@ -85,3 +85,4 @@ public class HammingEncode {
         return s;
     }
 }
+
