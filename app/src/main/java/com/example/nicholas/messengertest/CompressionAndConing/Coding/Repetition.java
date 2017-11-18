@@ -7,6 +7,7 @@ import java.util.Arrays;
  */
 public class Repetition {
     final static int numOfRepetitions = 3;
+    static boolean foundError;
 
     /**
      * Converts a byte array into a bit string
@@ -63,6 +64,9 @@ public class Repetition {
      */
     private static char vote(char[] input) {
         Arrays.sort(input);
+        if (input[0] != input[2]) {
+            foundError = true;
+        }
         return input[input.length / 2];
     }
 

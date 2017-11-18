@@ -21,6 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
+        android:background="@color/cadet"
         app:srcCompat="@android:drawable/ic_input_add" />
 
     <android.support.v4.widget.SwipeRefreshLayout

@@ -19,6 +19,7 @@
             android:paddingRight="24dp"
             android:paddingTop="56dp">
 
+
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="72dp"
@@ -62,6 +63,7 @@
                 android:layout_marginBottom="24dp"
                 android:layout_marginTop="24dp"
                 android:padding="12dp"
+                android:background="@color/pastelPurple"
                 android:text="Login" />
 
 
