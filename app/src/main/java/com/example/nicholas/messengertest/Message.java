@@ -2,33 +2,24 @@ package com.example.nicholas.messengertest;
 
 import android.content.Context;
 import android.net.Uri;
-
 import com.example.nicholas.messengertest.CompressionAndConing.CodingAndCompression;
 import com.f2prateek.progressbutton.ProgressButton;
 import com.loopj.android.http.FileAsyncHttpResponseHandler;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
 import cz.msebera.android.httpclient.Header;
 
 /**
- * Created by nicholas on 20/10/2017.
+ * This class represents a message, which content may either be a text or a file
  */
 
 public class Message {
-    public enum Type{
-        text, file;
-    }
-    String sender;
-    Type type;
     long timeDate;
     String message;
     String format;
     String path;
-    File file;
     Uri uri;
     String mime;
     boolean fileAttached;
@@ -36,18 +27,19 @@ public class Message {
     Context context;
     ProgressButton button;
 
-    public Message(String sender, Type type, long timeDate, String path, File file, boolean isMine, String format, Context context) {
-        this.sender = sender;
-        this.type = type;
+    public Message(long timeDate, String path, boolean isMine, String format, Context context) {
         this.timeDate = timeDate;
         this.path = path;
-        this.file = file;
         this.isMine = isMine;
         this.format = format;
         this.context = context;
         processMessage();
     }
 
+    /**
+     * Finds out whether the message is a file or a text message and launches the corresponding
+     * algorithm
+     */
     private void processMessage() {
         if (format.contains("<M>")) {
             getMessage();
@@ -58,6 +50,29 @@ public class Message {
         }
     }
 
+    /**
+     * downloads text message
+     */
+    private void getMessage(){
+        RestClient.get(path, null, new FileAsyncHttpResponseHandler(context) {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, File file) {
+            }
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, File file) {
+                message = retrieveText(file);
+                ((ChatActivity)context).refreshRecyclerView(true);
+            }
+        });
+    }
+
+    /**
+     * If this method is called, the input file contains a coded and compressed text message.
+     * The text is retrieved from the file and returns as a string
+     *
+     * @param file
+     * @return
+     */
     public String retrieveText(File file){
         try {
             return new String(decode(getBytesFromFile(file)));
@@ -67,46 +82,38 @@ public class Message {
         return null;
     }
 
-    private void getMessage(){
-        RestClient.get(path, null, new FileAsyncHttpResponseHandler(context) {
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, File file) {
-            }
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, File file) {
-                message = retrieveText(file);
-                ((ChatActivity)context).refreshRecyclerView(true);
-            }
-
-        });
-    }
-
+    /**
+     * downloads the content of the message from the server
+     */
     public void getFile(){
         RestClient.get(path, null, new FileAsyncHttpResponseHandler(context) {
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable throwable, File file) {
             }
-
             @Override
             public void onSuccess(int statusCode, Header[] headers, File file) {
                 uri = Uri.fromFile(file);
                 mime = format.substring(format.lastIndexOf("type:")+5,format.lastIndexOf('>'));
-                int x = 0;
             }
-
             @Override
             public void onProgress(long bytesWritten, long totalSize) {
+                //displays the progress of file download
                 button.setProgressAndMax((int)(((float)bytesWritten/totalSize)*10000), 10000);
                 super.onProgress(bytesWritten, totalSize);
             }
         });
     }
 
-    public  byte[] getBytesFromFile(File file) throws IOException {
+    /**
+     * Gets data from a file and converts it to a byte array
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    private   byte[] getBytesFromFile(File file) throws IOException {
         // Get the size of the file
         long length = file.length();
-
         // You cannot create an array using a long type.
         // It needs to be an int type.
         // Before converting to an int type, check
@@ -115,10 +122,8 @@ public class Message {
             // File is too large
             throw new IOException("File is too large!");
         }
-
         // Create the byte array to hold the data
         byte[] bytes = new byte[(int)length];
-
         // Read in the bytes
         int offset = 0;
         int numRead = 0;
@@ -140,6 +145,15 @@ public class Message {
         return bytes;
     }
 
+    /**
+     * Gets the information about coding and compression algorithms used for the content of the
+     * message from the <code>format</code> string received from the server with the message
+     * and decodes and decompresses the content using the corresponding algorithms.
+     *
+     * @param input
+     * @return
+     * @throws Exception
+     */
     public byte[] decode(byte[] input) throws Exception {
         CodingAndCompression.Compression compression = null;
         CodingAndCompression.Coding coding = null;

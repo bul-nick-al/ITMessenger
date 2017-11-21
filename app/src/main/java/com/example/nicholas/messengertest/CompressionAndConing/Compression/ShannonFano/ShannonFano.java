@@ -1,6 +1,5 @@
 package com.example.nicholas.messengertest.CompressionAndConing.Compression.ShannonFano;
 
-//import java.io.ByteArrayInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,7 +36,10 @@ public class ShannonFano {
      */
 
     private static void buildCodes(int len) {
-        buildCode(0, len - 1, "");
+        if (len == 1)
+            buildCode(0, 0, "0");
+        else
+            buildCode(0, len - 1, "");
     }
 
     /*
@@ -65,9 +67,12 @@ public class ShannonFano {
      */
     private static StringBuffer reconstructInput() {
         StringBuffer buffer = new StringBuffer();
-        for (byte b : input)
+        System.out.println("reconstruct check: " + input.length);
+        for (byte b : input) {
+            //System.out.println(codes.get(b));
             buffer.append(codes.get(b));
-
+        }
+        // System.out.println(buffer);
         return buffer;
     }
 
@@ -88,6 +93,7 @@ public class ShannonFano {
             //size = ByteBuffer.allocate(4).putInt(map.length).array();
         } catch (Exception e) {
         }
+        System.out.println("HASHMAP SIZE: " + map.length + "codes: " + len);
         byte output[] = new byte[1 + len + 4 + map.length];
         output[4] = (byte) (map.length & 0xFF);
         output[3] = (byte) ((map.length >> 8) & 0xFF);
@@ -106,7 +112,6 @@ public class ShannonFano {
         input = in;
         totalCount = input.length; // total amount of bytes
         diffCount = 0; // amount of different bytes (between 0..255)
-
         // get distribution over given byte array => map each byte to its frequency
         distribution = getDistribution(input);
         // array of Pairs (Byte,Frequency) in order to sort it
@@ -119,12 +124,15 @@ public class ShannonFano {
         }
         //sort by frequency
         Collections.sort(dist, Collections.reverseOrder());
-
+        //System.out.println("dist check : " + dist.size());
         //building codes for bytes
         codes = new HashMap<Byte, String>();
         buildCodes(diffCount);
+        //System.out.println("codes check : " + codes.size());
+
         // build binary string that represents codes for input bytes
         StringBuffer binaryString = reconstructInput();
+        //System.out.println(binaryString);
         //outputCodes();
         return getCompressedBytes(binaryString);
     }
@@ -200,10 +208,15 @@ public class ShannonFano {
      */
     public static double CodeLengthEntropy() {
         double entropy = 0;
-        for (Entry<Byte, Integer> e : distribution.entrySet())
+        int maxl = 0;
+        for (Entry<Byte, Integer> e : distribution.entrySet()) {
+            maxl = (maxl < codes.get(e.getKey()).length()) ? codes.get(e.getKey()).length() : maxl;
             entropy += codes.get(e.getKey()).length() * (double) e.getValue() / totalCount;
+        }
+        System.out.print("MAx  code length: " + maxl);
         return entropy;
     }
+
     // 1 + 256 (1 + 2) ~ 1 kb
 
     public static double Entropy() {
@@ -257,3 +270,4 @@ public class ShannonFano {
         return result;
     }
 }
+

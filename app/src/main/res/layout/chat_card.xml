@@ -13,6 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
+        android:background="@color/white"
         android:fadingEdgeLength="0dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
@@ -23,7 +24,7 @@
             android:layout_marginLeft="10dp"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:src="@drawable/q0"
+            android:src="@drawable/p2"
             app:civ_border_width="1dp"
             app:civ_border_color="@color/darkGunmetal" />
 
@@ -38,8 +39,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:layout_weight="1"
-
+                android:textSize="18dp"
+                android:textColor="@color/darkGunmetal"
                 android:text="Николай Булдаков" />
 
             <TextView
@@ -50,6 +51,7 @@
                 android:layout_marginRight="10dp"
                 android:layout_alignParentRight="true"
                 android:layout_weight="0.12"
+                android:textColor="@color/colorPrimary"
                 android:text="23:00 PM" />
 
             <TextView
@@ -63,6 +65,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_below="@id/timeDate"
                 android:layout_marginTop="10dp"
+                android:textColor="@color/colorPrimary"
                 android:text="Всем добрый день. Я создал гугл таблицу, в которой вы можете забронир..." />
 
         </RelativeLayout>

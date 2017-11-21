@@ -6,7 +6,8 @@
     <color name="colorAccent">#D2D68D</color>
     <color name="mistyRose">#FDE8E9</color>
     <color name="cameoPink">#E3BAC6</color>
-    <color name="pastelPurple">#BC9EC1</color>
+    <color name="pastelPurple">#0080ff</color>
     <color name="cadet">#596475</color>
     <color name="darkGunmetal">#1F2232</color>
+    <color name="white">#ffffff</color>
 </resources>

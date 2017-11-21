@@ -18,52 +18,57 @@
             android:id="@+id/my_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@+id/form"
-            android:layout_marginTop="@dimen/toolbar_size"
             android:divider="@null"
             android:dividerHeight="0dp"
-            android:scrollbars="vertical" />
+            android:scrollbars="vertical"
+            android:background="@color/white"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_above="@+id/form" />
 
-        <LinearLayout
-            android:id="@+id/form"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:orientation="horizontal"
-            android:paddingBottom="2dp">
+            android:id="@+id/form"
+            android:background="@color/white"
+            android:layout_alignParentBottom="true">
 
             <ImageButton
                 android:id="@+id/attachFileButton"
-                android:layout_width="34dp"
-                android:layout_height="match_parent"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentRight="true"
-                android:layout_weight="0.85"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_alignParentLeft="true"
                 android:background="@drawable/attach_file"
                 android:text="d" />
 
             <EditText
                 android:id="@+id/messageEditText"
-                android:layout_width="252dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignTop="@+id/button1"
-                android:layout_toLeftOf="@+id/sendMessageButton"
-                android:layout_weight="0.72"
                 android:ems="10"
-                android:maxHeight="80dp" />
+                android:maxHeight="80dp"
+                android:layout_alignParentTop="true"
+                android:layout_toLeftOf="@+id/sendMessageButton"
+                android:layout_toRightOf="@+id/attachFileButton"
+                android:layout_toStartOf="@+id/sendMessageButton"
+                android:layout_toEndOf="@+id/attachFileButton" />
 
             <ImageButton
                 android:id="@+id/sendMessageButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
                 android:layout_alignParentRight="true"
                 android:background="@drawable/send_button"
                 android:text="d" />
-        </LinearLayout>
+
+        </RelativeLayout>
+
 
         <include layout="@layout/toolbar" />
 

@@ -9,15 +9,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.loopj.android.http.JsonHttpResponseHandler;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import cz.msebera.android.httpclient.Header;
-
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class LoginActivity extends AppCompatActivity {
@@ -80,7 +76,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     /**
-     * Attempts to connect conduct authorization with the server
+     * Attempts to conduct authorization with the server
      */
     private void tryLogin(){
         username = mUsernameEditTextView.getText().toString();
@@ -89,12 +85,15 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, cz.msebera.android.httpclient.Header[] headers, JSONObject response) {
                 try {
+                    //save all user's information
                     token = (String) response.get("auth_token");
                     editor.putString("username", username);
                     editor.putString("token", token);
+                    editor.putString("coding", "repetition");
+                    editor.putString("compression", "shannon");
                     editor.commit();
                     getMyID();
-
+                    //once authorised, launches the main activity
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
@@ -104,7 +103,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
             }
-
             @Override
             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, Throwable throwable, JSONObject errorResponse) {
                 try {
@@ -151,6 +149,9 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * gets from the server current user's id
+     */
     private void getMyID(){
         RestClient.get("/api/user/index?username="+settings.getString("username",null), null, new JsonHttpResponseHandler()  {
             @Override
@@ -164,7 +165,6 @@ public class LoginActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-
             @Override
             public void onFailure(int statusCode, cz.msebera.android.httpclient.Header[] headers, Throwable throwable, JSONObject errorResponse) {
                 try {
@@ -172,15 +172,6 @@ public class LoginActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            }
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                super.onFailure(statusCode, headers, responseString, throwable);
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONArray errorResponse) {
-                super.onFailure(statusCode, headers, throwable, errorResponse);
             }
         });
     }

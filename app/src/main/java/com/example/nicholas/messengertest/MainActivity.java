@@ -1,6 +1,5 @@
 package com.example.nicholas.messengertest;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,18 +19,11 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.loopj.android.http.JsonHttpResponseHandler;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.File;
 import java.util.ArrayList;
-
-import cz.msebera.android.httpclient.Header;
-
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 public class MainActivity extends AppCompatActivity {
@@ -51,7 +43,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        File x= new File("temp");
         //first set up setting and check if logged in
         initializeSettings();
         checkLoggedIn();
@@ -62,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
         customizeToolbar();
         setOnClickListeners();
         setTitle(settings.getString("token",null));
-        loadMessages();
+        loadChatPreviews();
     }
 
     public void initializeSettings(){
@@ -92,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         chatPreviews = new ArrayList<>();
-        adapter = new CardChatAdapter(chatPreviews, getApplicationContext());
+        adapter = new CardChatPreviewAdapter(chatPreviews, getApplicationContext());
         recyclerView.setAdapter(adapter);
         addNewChat = (FloatingActionButton) findViewById(R.id.fab);
     }
@@ -104,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                loadMessages();
+                loadChatPreviews();
             }
         });
         addNewChat.setOnClickListener(new View.OnClickListener() {
@@ -124,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        //adds actions when settings button or log out button are pressed
         switch (item.getItemId()){
             case R.id.action_log_out:
                 editor.clear();
@@ -143,13 +135,16 @@ public class MainActivity extends AppCompatActivity {
     public void customizeToolbar() {
         mActionBarToolbar = (Toolbar) findViewById(R.id.toolbar);
         mToolbarTitle = (TextView) mActionBarToolbar.findViewById(R.id.toolbar_title);
+        mToolbarTitle.setTextColor(getResources().getColor(R.color.white));
         setSupportActionBar(mActionBarToolbar);
         mToolbarTitle.setText(settings.getString("username","no:(((("));
-//        mToolbarTitle.setText("het");
         getSupportActionBar().setDisplayShowTitleEnabled(false);
     }
 
-    public void loadMessages(){
+    /**
+     *
+     */
+    public void loadChatPreviews(){
         chatPreviews.clear();
         RestClient.get("/api/message/index?token="+settings.getString("token", null),null,new JsonHttpResponseHandler(){
             @Override
@@ -167,21 +162,6 @@ public class MainActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                super.onFailure(statusCode, headers, responseString, throwable);
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-                super.onFailure(statusCode, headers, throwable, errorResponse);
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONArray errorResponse) {
-                super.onFailure(statusCode, headers, throwable, errorResponse);
             }
         });
         swipeRefreshLayout.setRefreshing(false);
@@ -202,18 +182,38 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-    public boolean isMine(int id){
-        return id == settings.getInt("myID", 0);
-    }
 
+    /**
+     * shows a dialog in which user can select which algorithms will be used for compression and coding
+     */
     protected void showSettingsDialog() {
+        //setting the elements of the dialog
         LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
         View promptView = layoutInflater.inflate(R.layout.dialog_settings, null);
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
         alertDialogBuilder.setView(promptView);
         final RadioGroup radioGroupCompression = (RadioGroup)promptView.findViewById(R.id.radio_group_compression);
         final RadioGroup radioGroupCoding = (RadioGroup)promptView.findViewById(R.id.radio_group_coding);
-        // setup a dialog window
+
+        //this block is dedicated to setting which boxes will be checked initially according to what
+        //algorithms have been chosen before
+        String coding = settings.getString("coding",null);
+        String compression = settings.getString("compression",null);
+        if (coding.equals("repetition"))
+            radioGroupCoding.check(R.id.repetition);
+        else if (coding.equals("hamming"))
+            radioGroupCoding.check(R.id.hamming);
+        else if (coding.equals("parity"))
+            radioGroupCoding.check(R.id.parity);
+
+        if (compression.equals("shannon"))
+            radioGroupCompression.check(R.id.shannon);
+        else if (compression.equals("lzm"))
+            radioGroupCompression.check(R.id.lzm);
+        else if (compression.equals("huffman"))
+            radioGroupCompression.check(R.id.huffman);
+
+        //setting logic for the buttons
         alertDialogBuilder.setCancelable(false)
                 .setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
@@ -257,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * launches dialog for starting new chat
+     * launches dialog for starting a new chat
      */
     protected void showNewChatDialog() {
         LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);

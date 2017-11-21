@@ -8,29 +8,35 @@ import com.example.nicholas.messengertest.CompressionAndConing.Compression.Huffm
 import com.example.nicholas.messengertest.CompressionAndConing.Compression.Huffman.HuffmanEncoder;
 import com.example.nicholas.messengertest.CompressionAndConing.Compression.ShannonFano.ShannonFano;
 import com.example.nicholas.messengertest.CompressionAndConing.Compression.lzma.LZMA;
-//import com.example.nicholas.messengertest.CompressionAndConing.Compression.ShannonFano.ShannonFano;
-
-import org.apache.commons.io.FileUtils;
-
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * Created by nicholas on 14/11/2017.
+ * This class provides an unified interface for encoding/decoding and compressing/decompressing data in
+ * the byte array form.
  */
 
 public class CodingAndCompression {
+    //enum for coding choice
     public enum Coding {
         repetition, hamming, parity
     }
+    //enum for compression choice
     public enum Compression {
         shannon, lzm, huffman
     }
 
+    /**
+     * Provides a unified interface for encoding and compression
+     * @param input a byte array to be encoded and compressed
+     * @param compression which compression algorithm to use
+     * @param coding which encoding algorithm to use
+     * @return encoded and compressed data
+     */
     public static byte[] compressAndEncode(byte[] input, Compression compression, Coding coding){
         byte[] output = input;
+        //compression with the chosen algorithm
         switch (compression){
             case shannon:
                 output = ShannonFano.getCompressed(output);
@@ -49,6 +55,7 @@ public class CodingAndCompression {
                 e.printStackTrace();
             }
         }
+        //encoding with the chosen algorithm
         switch (coding){
             case repetition:
                 output = Repetition.encode(output);
@@ -63,8 +70,16 @@ public class CodingAndCompression {
         return output;
     }
 
+    /**
+     * Provides a unified interface for decoding and decompression
+     * @param input a byte array to be decoded and decompressed
+     * @param compression which decompression algorithm to use
+     * @param coding which decoding algorithm to use
+     * @return decoded and decompressed data
+     */
     public static byte[] decodeAndDecompress(byte[] input, Compression compression, Coding coding) throws Exception {
         byte[] output = input;
+        //decoding with the chosen algorithm
         switch (coding){
             case repetition:
                 output = Repetition.decode(output);
@@ -76,6 +91,7 @@ public class CodingAndCompression {
                 output = ParityBit.decode(output);
                 break;
         }
+        //decompression with the chosen algorithm
         switch (compression){
             case shannon:
                 output = ShannonFano.getDecompressed(output);
@@ -88,6 +104,7 @@ public class CodingAndCompression {
         }
         return output;
     }
+
 
     public static byte[] getBytes(ArrayList<Byte> list){
         byte[] result = new byte[list.size()];

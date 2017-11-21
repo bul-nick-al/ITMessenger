@@ -23,13 +23,13 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class ChatPreview {
-    Context context;
-    String username;
-    String format;
-    int id;
+    private Context context;
+    private String path;
+    private String format;
     long timeDate;
-    String path;
+    int id;
     String message;
+    String username;
 
     public ChatPreview(int id, String path, long timeDate, Context context, String format) {
         this.id = id;
@@ -41,15 +41,10 @@ public class ChatPreview {
         processMessage();
     }
 
-    public String retrieveText(File file){
-        try {
-            return new String(decode(getBytesFromFile(file)));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
+    /**
+     * Finds out whether the message is a file or a text message and launches the corresponding
+     * algorithm
+     */
     private void processMessage(){
         if (format.contains("<M>")){
             getFile();
@@ -59,6 +54,25 @@ public class ChatPreview {
         }
     }
 
+    /**
+     * If this method is called, the input file contains a coded and compressed text message.
+     * The text is retrieved from the file and returns as a string
+     *
+     * @param file
+     * @return
+     */
+    private String retrieveText(File file){
+        try {
+            return new String(decode(getBytesFromFile(file)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * sets the username of the other member of a conversation, getting from the server
+     */
     private void setUsername(){
         RestClient.get("/api/user/index?id="+id, null, new JsonHttpResponseHandler()  {
             @Override
@@ -73,6 +87,9 @@ public class ChatPreview {
         });
     }
 
+    /**
+     * downloads the content of the message from the server
+     */
     private void getFile(){
         RestClient.get(path, null, new FileAsyncHttpResponseHandler(context) {
             @Override
@@ -88,7 +105,15 @@ public class ChatPreview {
 
         });
     }
-    public  byte[] getBytesFromFile(File file) throws IOException {
+
+    /**
+     * Gets data from a file and converts it to a byte array
+     *
+     * @param file
+     * @return
+     * @throws IOException
+     */
+    private byte[] getBytesFromFile(File file) throws IOException {
         // Get the size of the file
         long length = file.length();
 
@@ -125,6 +150,15 @@ public class ChatPreview {
         return bytes;
     }
 
+    /**
+     * Gets the information about coding and compression algorithms used for the content of the
+     * message from the <code>format</code> string received from the server with the message
+     * and decodes and decompresses the content using the corresponding algorithms.
+     *
+     * @param input
+     * @return
+     * @throws Exception
+     */
     public byte[] decode(byte[] input) throws Exception {
         CodingAndCompression.Compression compression = null;
         CodingAndCompression.Coding coding = null;

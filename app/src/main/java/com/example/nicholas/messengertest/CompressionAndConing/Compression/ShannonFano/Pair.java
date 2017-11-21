@@ -1,5 +1,4 @@
 package com.example.nicholas.messengertest.CompressionAndConing.Compression.ShannonFano;
-//package demmprogrammi1.ShannonCD;
 
 import java.lang.Comparable;
 
